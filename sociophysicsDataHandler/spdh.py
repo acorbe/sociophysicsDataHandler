@@ -22,7 +22,8 @@ class SociophysicsDataHandler(object):
                          , auth_fname=DEFAULT_FNAME):
         try:
             with open(auth_fname, 'r') as f:
-                content = list(f.readlines())
+                content = [x.replace('\n','').replace(' ','') for x in f.readlines()]
+                
 
             self.__credentials_usr = content[0]
             self.__credentials_token = content[1]
@@ -47,13 +48,17 @@ class SociophysicsDataHandler(object):
     def __login(self):
         self.__oc_client = owncloud.Client(self.__target_webdav)
         oc = self.__oc_client
+        
         usr = self.__credentials_usr
         tok = self.__credentials_token
+        
 
         try:
+            ## print(usr,tok)
             oc.login(usr, tok)
         except Exception as e:
-            print("Error: " + e)
+            print("Login error. ")
+            print(e)
 
     def fetch_data_from_path(self
                              , path
@@ -62,6 +67,7 @@ class SociophysicsDataHandler(object):
             path = '/' + path
 
         final_path = basepath + path
+        print('trying to fetch:', final_path)
 
         df = self.__oc_client.get_file_contents(final_path)
 
