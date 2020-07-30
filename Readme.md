@@ -3,6 +3,6 @@
 ```bash
 
 git clone <repo>
-pip setup -e sociophysicsDataHandler
+pip install -e ./sociophysicsDataHandler
 
 ```

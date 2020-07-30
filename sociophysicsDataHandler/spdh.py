@@ -2,6 +2,7 @@
 """
 
 import owncloud
+import pyarrow.parquet as pq
 
 TARGET_WEBDAV = "https://tue.data.surfsara.nl"
 DEFAULT_FNAME = "auth.txt"
@@ -60,6 +61,9 @@ class SociophysicsDataHandler(object):
             print("Login error. ")
             print(e)
 
+    def __decode_parquet(self,fpath):        
+        return pq.ParquetDataset(fpath).read_pandas().to_pandas()
+
     def fetch_data_from_path(self
                              , path
                              , basepath=BASE_PATH):
@@ -69,9 +73,12 @@ class SociophysicsDataHandler(object):
         final_path = basepath + path
         print('trying to fetch:', final_path)
 
-        df = self.__oc_client.get_file_contents(final_path)
+        #df = self.__oc_client.get_file_contents(final_path)
+        
+        temp_file = 'temp.parquet'
+        self.__oc_client.get_file(final_path,temp_file)
 
-        self.df = df
+        self.df = self.__decode_parquet(temp_file)
 
         print("data fetched. Accessible as <this-object>.df")
         
