@@ -3,6 +3,8 @@
 
 import owncloud
 import pyarrow.parquet as pq
+import pyarrow
+
 
 TARGET_WEBDAV = "https://tue.data.surfsara.nl"
 DEFAULT_FNAME = "auth.txt"
@@ -64,21 +66,31 @@ class SociophysicsDataHandler(object):
     def __decode_parquet(self,fpath):        
         return pq.ParquetDataset(fpath).read_pandas().to_pandas()
 
+    def __decode_parquet_in_memory(self, fpath):
+
+        to_obj_f = pyarrow.BufferReader(fpath)
+        return pq.read_pandas(to_obj_f).to_pandas()
+
     def fetch_data_from_path(self
                              , path
                              , basepath=BASE_PATH):
+        
         if not path.startswith('/'):
             path = '/' + path
 
         final_path = basepath + path
         print('trying to fetch:', final_path)
 
-        #df = self.__oc_client.get_file_contents(final_path)
-        
-        temp_file = 'temp.parquet'
-        self.__oc_client.get_file(final_path,temp_file)
+        dump_data_in_memory_only = True
 
-        self.df = self.__decode_parquet(temp_file)
+        if dump_data_in_memory_only:
+            df = self.__oc_client.get_file_contents(final_path)
+            self.df = self.__decode_parquet_in_memory(df)
+        else:
+            ## not the preferred way. disabled by default.
+            temp_file = 'temp.parquet'
+            self.__oc_client.get_file(final_path,temp_file)
+            self.df = self.__decode_parquet(temp_file)
 
         print("data fetched. Accessible as <this-object>.df")
         
