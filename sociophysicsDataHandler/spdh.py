@@ -1,4 +1,7 @@
-"""specs etc.
+"""Pedestrian dynamics data retriever for the Sociophysics courses at Eindhoven University of Technology.
+
+Author: Alessandro Corbetta
+
 """
 
 import owncloud
