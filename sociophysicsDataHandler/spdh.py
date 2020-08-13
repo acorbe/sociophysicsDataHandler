@@ -7,7 +7,8 @@ Author: Alessandro Corbetta
 import owncloud
 import pyarrow.parquet as pq
 import pyarrow
-
+import PIL.Image as Image
+import io
 
 TARGET_WEBDAV = "https://tue.data.surfsara.nl"
 DEFAULT_FNAME = "auth.txt"
@@ -96,6 +97,20 @@ class SociophysicsDataHandler(object):
             self.df = self.__decode_parquet(temp_file)
 
         print("data fetched. Accessible as <this-object>.df")
+        
+    def fetch_background_image_from_path(self
+                                         , path
+                                         , basepath=BASE_PATH):
+        if not path.startswith('/'):
+            path = '/' + path
+
+        final_path = basepath + path
+        print('trying to fetch:', final_path)
+        
+        bg = self.__oc_client.get_file_contents(final_path)
+        self.bg = Image.open(io.BytesIO(bg))
+        
+        print("background fetched. Accessible as <this-object>.bg")
             
     def list_files(self
                    , path
