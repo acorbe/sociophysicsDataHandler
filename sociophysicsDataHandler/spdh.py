@@ -96,7 +96,25 @@ class SociophysicsDataHandler(object):
             self.df = self.__decode_parquet(temp_file)
 
         print("data fetched. Accessible as <this-object>.df")
-        
+            
+    def list_files(self
+                   , path
+                   , basepath=BASE_PATH):
 
+        if not path.startswith('/'):
+            path = '/' + path
+        if not path.endswith('/'):
+            path = path + '/'
+
+        final_path = basepath + path
+        entries = self.__oc_client.list(final_path)
         
-        
+        print(f"Folder {path} contains the following files and/or folders:")
+        for file in entries:
+            if file.file_type == 'dir':
+                print(f'Folder: {file.name}\n')
+                self.list_files(path + file.name)
+            else:
+                print(f'  File: {file.name}')
+                if file == entries[-1]:
+                    print('\n')
