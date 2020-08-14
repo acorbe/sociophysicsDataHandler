@@ -31,7 +31,6 @@ class SociophysicsDataHandler(object):
             with open(auth_fname, 'r') as f:
                 content = [x.replace('\n','').replace(' ','') for x in f.readlines()]
                 
-
             self.__credentials_usr = content[0]
             self.__credentials_token = content[1]
 
@@ -67,13 +66,23 @@ class SociophysicsDataHandler(object):
             print("Login error. ")
             print(e)
 
-    def __decode_parquet(self,fpath):        
+    def __decode_parquet(self, fpath):        
         return pq.ParquetDataset(fpath).read_pandas().to_pandas()
 
     def __decode_parquet_in_memory(self, fpath):
-
         to_obj_f = pyarrow.BufferReader(fpath)
         return pq.read_pandas(to_obj_f).to_pandas()
+    
+    def __cast_dtypes(self, df):
+        dtypes = {
+            'date_time_utc': 'float64',
+            'tracked_object': 'int32',
+            'x_pos': 'float32',
+            'y_pos': 'float32'
+        }
+        df = df.assign(**{c: df[c].astype(d)
+                          for c, d in dtypes.items()})
+        return df
 
     def fetch_data_from_path(self
                              , path
@@ -95,6 +104,8 @@ class SociophysicsDataHandler(object):
             temp_file = 'temp.parquet'
             self.__oc_client.get_file(final_path,temp_file)
             self.df = self.__decode_parquet(temp_file)
+            
+        self.df = self.__cast_dtypes(self.df)
 
         print("data fetched. Accessible as <this-object>.df")
         
