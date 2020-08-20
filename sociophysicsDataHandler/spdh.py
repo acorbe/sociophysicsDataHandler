@@ -84,9 +84,9 @@ class SociophysicsDataHandler(object):
                           for c, d in dtypes.items()})
         return df
 
-    def fetch_data_from_path(self
-                             , path
-                             , basepath=BASE_PATH):
+    def fetch_prorail_data_from_path(self
+                                     , path
+                                     , basepath=BASE_PATH):
         
         if not path.startswith('/'):
             path = '/' + path
