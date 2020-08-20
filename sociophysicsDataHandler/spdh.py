@@ -7,7 +7,8 @@ Author: Alessandro Corbetta
 import owncloud
 import pyarrow.parquet as pq
 import pyarrow
-
+import PIL.Image as Image
+import io
 
 TARGET_WEBDAV = "https://tue.data.surfsara.nl"
 DEFAULT_FNAME = "auth.txt"
@@ -30,7 +31,6 @@ class SociophysicsDataHandler(object):
             with open(auth_fname, 'r') as f:
                 content = [x.replace('\n','').replace(' ','') for x in f.readlines()]
                 
-
             self.__credentials_usr = content[0]
             self.__credentials_token = content[1]
 
@@ -66,13 +66,23 @@ class SociophysicsDataHandler(object):
             print("Login error. ")
             print(e)
 
-    def __decode_parquet(self,fpath):        
+    def __decode_parquet(self, fpath):        
         return pq.ParquetDataset(fpath).read_pandas().to_pandas()
 
     def __decode_parquet_in_memory(self, fpath):
-
         to_obj_f = pyarrow.BufferReader(fpath)
         return pq.read_pandas(to_obj_f).to_pandas()
+    
+    def __cast_dtypes(self, df):
+        dtypes = {
+            'date_time_utc': 'float64',
+            'tracked_object': 'int32',
+            'x_pos': 'float32',
+            'y_pos': 'float32'
+        }
+        df = df.assign(**{c: df[c].astype(d)
+                          for c, d in dtypes.items()})
+        return df
 
     def fetch_data_from_path(self
                              , path
@@ -94,9 +104,43 @@ class SociophysicsDataHandler(object):
             temp_file = 'temp.parquet'
             self.__oc_client.get_file(final_path,temp_file)
             self.df = self.__decode_parquet(temp_file)
+            
+        self.df = self.__cast_dtypes(self.df)
 
         print("data fetched. Accessible as <this-object>.df")
         
+    def fetch_background_image_from_path(self
+                                         , path
+                                         , basepath=BASE_PATH):
+        if not path.startswith('/'):
+            path = '/' + path
 
+        final_path = basepath + path
+        print('trying to fetch:', final_path)
         
+        bg = self.__oc_client.get_file_contents(final_path)
+        self.bg = Image.open(io.BytesIO(bg))
         
+        print("background fetched. Accessible as <this-object>.bg")
+            
+    def list_files(self
+                   , path
+                   , basepath=BASE_PATH):
+
+        if not path.startswith('/'):
+            path = '/' + path
+        if not path.endswith('/'):
+            path = path + '/'
+
+        final_path = basepath + path
+        entries = self.__oc_client.list(final_path)
+        
+        print(f"Folder {path} contains the following files and/or folders:")
+        for file in entries:
+            if file.file_type == 'dir':
+                print(f'Folder: {file.name}\n')
+                self.list_files(path + file.name)
+            else:
+                print(f'  File: {file.name}')
+                if file == entries[-1]:
+                    print('\n')
