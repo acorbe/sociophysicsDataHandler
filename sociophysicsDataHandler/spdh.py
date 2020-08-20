@@ -8,7 +8,7 @@ import owncloud
 import pyarrow.parquet as pq
 import pyarrow
 import PIL.Image as Image
-import io
+import io, os
 
 TARGET_WEBDAV = "https://tue.data.surfsara.nl"
 DEFAULT_FNAME = "auth.txt"
@@ -68,10 +68,18 @@ class SociophysicsDataHandler(object):
 
     def __decode_parquet(self, fpath):        
         return pq.ParquetDataset(fpath).read_pandas().to_pandas()
+    
+    def __decode_targz(self, fpath):   
+        from .ddut import get_depth_maps
+        return get_depth_maps([fpath], verbose=True)
 
     def __decode_parquet_in_memory(self, fpath):
         to_obj_f = pyarrow.BufferReader(fpath)
         return pq.read_pandas(to_obj_f).to_pandas()
+    
+    def __decode_targz_in_memory(self, fpath):   
+        to_obj_f = pyarrow.BufferReader(fpath)
+        return self.__decode_targz(to_obj_f)
     
     def __cast_dtypes(self, df):
         dtypes = {
@@ -108,6 +116,26 @@ class SociophysicsDataHandler(object):
         self.df = self.__cast_dtypes(self.df)
 
         print("data fetched. Accessible as <this-object>.df")
+        
+    def fetch_depth_data_from_path(self
+                             , path
+                             , basepath=BASE_PATH):
+
+        final_path = os.path.join(basepath, path)
+        print('trying to fetch:', final_path)
+
+        dump_data_in_memory_only = True
+
+        if dump_data_in_memory_only:
+            targz = self.__oc_client.get_file_contents(final_path)
+            self.t, self.dd  = self.__decode_targz_in_memory(targz)
+        else:
+            ## not the preferred way. disabled by default.
+            temp_file = 'temp.tar.gz'
+            self.__oc_client.get_file(final_path, temp_file)
+            self.t, self.dd = self.__decode_targz(temp_file)
+
+        print("depth data fetched. Accessible as <this-object>.dd and associated timestamps accesible as <this-object>.t")
         
     def fetch_background_image_from_path(self
                                          , path
