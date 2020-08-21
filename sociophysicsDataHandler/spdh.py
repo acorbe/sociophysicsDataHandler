@@ -15,11 +15,16 @@ DEFAULT_FNAME = "auth.txt"
 BASE_PATH = "/ProRail_USE_LL_data"
 
 class SociophysicsDataHandler(object):
+    
+    """Pedestrian dynamics data retriever for the Sociophysics courses at Eindhoven University of Technology.  
+    """
 
     def __init__(self
                  , target_webdav=TARGET_WEBDAV
                  , auth_fname=DEFAULT_FNAME):
         
+        """Constructor method
+        """
         self.__target_webdav=target_webdav
         self.load_credentials(auth_fname)
         if self.__have_credentials:
@@ -27,6 +32,16 @@ class SociophysicsDataHandler(object):
 
     def load_credentials(self
                          , auth_fname=DEFAULT_FNAME):
+        
+        """Load credentials from auth.txt file. A typical file looks
+        as follows:
+        
+        s123456@student.tue.nl
+        XXXX-XXXX-XXXX-XXXX
+
+        :param auth_fname: path + filename to auth.txt file
+        """
+        
         try:
             with open(auth_fname, 'r') as f:
                 content = [x.replace('\n','').replace(' ','') for x in f.readlines()]
@@ -96,6 +111,13 @@ class SociophysicsDataHandler(object):
                                      , path
                                      , basepath=BASE_PATH):
         
+        """
+        Fetch trajectory data from tue research drive.
+        
+        :param path: path + filename if the file that will be fetched
+        :param basepath: enables changing the basepath. Only for advanced usage.
+        """
+        
         if not path.startswith('/'):
             path = '/' + path
 
@@ -120,6 +142,13 @@ class SociophysicsDataHandler(object):
     def fetch_depth_data_from_path(self
                              , path
                              , basepath=BASE_PATH):
+        
+        """
+        Fetch image depth data from tue research drive.
+        
+        :param path: path + filename if the file that will be fetched
+        :param basepath: enables changing the basepath. Only for advanced usage.
+        """
 
         final_path = os.path.join(basepath, path)
         print('trying to fetch:', final_path)
@@ -140,6 +169,14 @@ class SociophysicsDataHandler(object):
     def fetch_background_image_from_path(self
                                          , path
                                          , basepath=BASE_PATH):
+        
+        """
+        Fetch overhead black/white image, as was observed by station tracking 
+        sensors. This enables plotting trajectories on top of the platform.
+        
+        :param path: path + filename if the file that will be fetched
+        :param basepath: enables changing the basepath. Only for advanced usage.
+        """
         if not path.startswith('/'):
             path = '/' + path
 
@@ -155,6 +192,14 @@ class SociophysicsDataHandler(object):
                    , path
                    , basepath=BASE_PATH):
         
+        """
+        List all files within a folder of the tue research drive. 
+        For instance: dh.list_files("") returns a pandas dataframe
+        with the paths available from the root folder.
+       
+        :param path: path + filename if the file that will be fetched
+        :param basepath: enables changing the basepath. Only for advanced usage.
+        """
         from pandas import DataFrame
         
         final_path = os.path.join("", basepath, path, "")
@@ -171,6 +216,13 @@ class SociophysicsDataHandler(object):
     def print_files(self
                    , path
                    , basepath=BASE_PATH):
+        
+        """
+        Print all files within a folder of the tue research drive. 
+       
+        :param path: path + filename if the file that will be fetched
+        :param basepath: enables changing the basepath. Only for advanced usage.
+        """
 
         final_path = os.path.join("", basepath, path, "")
 
