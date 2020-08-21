@@ -7,7 +7,7 @@ with open("Readme.md", "r") as fh:
 
 setup(name='sociophysicsDataHandler',
       description="Data retriever package for the Sociophysics course at TU/Eindhoven.",
-      version='1.0.1',
+      version='1.0.2',
       author='Alessandro Corbetta; Cas Pouw; Joris Willems',
       author_email='a.corbetta@tue.nl',
       url='https://github.com/acorbe/sociophysicsDataHandler',
@@ -17,5 +17,5 @@ setup(name='sociophysicsDataHandler',
       license="new BSD",
       install_requires=['numpy>=1.8', 'matplotlib>=2.0'
                         , 'scipy>=1.4', 'pyocclient', 'pyarrow'
-                        , 'pandas', 'Pillow>=2.2.1']
+                        , 'pandas', 'pillow']
 )
