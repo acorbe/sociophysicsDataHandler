@@ -16,5 +16,5 @@ setup(name='sociophysicsDataHandler',
       packages=['sociophysicsDataHandler'],
       license="new BSD",
       install_requires=['numpy>=1.8', 'matplotlib>=2.0'
-                        , 'scipy>=1.4', 'pyocclient', 'pyarrow']
+                        , 'scipy>=1.4', 'pyocclient', 'pyarrow', 'pandas', 'PIL']
 )

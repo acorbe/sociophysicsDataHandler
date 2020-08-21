@@ -154,20 +154,33 @@ class SociophysicsDataHandler(object):
     def list_files(self
                    , path
                    , basepath=BASE_PATH):
+        
+        from pandas import DataFrame
+        
+        final_path = os.path.join("", basepath, path, "")
+        
+        oc_files =  self.__oc_client.list(final_path)
+        
+        self.filelist = DataFrame([x.__dict__ for x in oc_files]).drop('file_type', axis=1)
+        
+        print("Files listed. Accessible as <this-object>.filelist")
+        
+        return self.filelist
+        
+            
+    def print_files(self
+                   , path
+                   , basepath=BASE_PATH):
 
-        if not path.startswith('/'):
-            path = '/' + path
-        if not path.endswith('/'):
-            path = path + '/'
+        final_path = os.path.join("", basepath, path, "")
 
-        final_path = basepath + path
         entries = self.__oc_client.list(final_path)
         
         print(f"Folder {path} contains the following files and/or folders:")
         for file in entries:
             if file.file_type == 'dir':
                 print(f'Folder: {file.name}\n')
-                self.list_files(path + file.name)
+                self.print_files(os.path.join(path, file.name))
             else:
                 print(f'  File: {file.name}')
                 if file == entries[-1]:
