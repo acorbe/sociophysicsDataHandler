@@ -2,19 +2,20 @@
 
 from setuptools import setup
 
-# with open("README.md", "r") as fh:
-#         long_description = fh.read()
+with open("README.md", "r") as fh:
+        long_description = fh.read()
 
 setup(name='sociophysicsDataHandler',
-      description="basic description",
-      version='0.1',
-      author='Alessandro Corbetta, Cas Pouw',
+      description="Data retriever package for the Sociophysics course at TU/Eindhoven.",
+      version='1.0.0',
+      author='Alessandro Corbetta; Cas Pouw; Joris Willems',
       author_email='a.corbetta@tue.nl',
-      url='https://github.com/acorbe/autogpy',
-      long_description="we will have a long description",
-      #     long_description_content_type="text/markdown",
+      url='https://github.com/acorbe/sociophysicsDataHandler',
+      long_description = long_description,
+      long_description_content_type="text/markdown",
       packages=['sociophysicsDataHandler'],
       license="new BSD",
       install_requires=['numpy>=1.8', 'matplotlib>=2.0'
-                        , 'scipy>=1.4', 'pyocclient', 'pyarrow', 'pandas', 'PIL']
+                        , 'scipy>=1.4', 'pyocclient', 'pyarrow'
+                        , 'pandas', 'PIL']
 )
