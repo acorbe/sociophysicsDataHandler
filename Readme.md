@@ -19,7 +19,7 @@ pip install sociophysicsDataHandler
 ### Installation from source
 ```bash
 
-git clone <repo>
+git clone https://github.com/acorbe/sociophysicsDataHandler.git
 pip install -e sociophysicsDataHandler/
 
 ```
