@@ -102,6 +102,11 @@ class SociophysicsDataHandler(object):
         df = df.assign(**{c: df[c].astype(d)
                           for c, d in dtypes.items()})
         return df
+    
+    def __rename_columns(self, df):
+        del df['h_pos']
+        df.columns = ['date_time_utc', 'tracked_object', 'x_pos', 'y_pos']
+        return df
 
     def fetch_prorail_data_from_path(self, path, basepath=BASE_PATH):
         """
@@ -128,6 +133,9 @@ class SociophysicsDataHandler(object):
             temp_file = 'temp.parquet'
             self.__oc_client.get_file(final_path, temp_file)
             self.df = self.__decode_parquet(temp_file)
+
+        if self.df.shape[1] > 4:
+            self.df = self.__rename_columns(self.df)
 
         self.df = self.__cast_dtypes(self.df)
 
