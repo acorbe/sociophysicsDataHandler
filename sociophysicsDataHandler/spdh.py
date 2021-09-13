@@ -213,6 +213,7 @@ class SociophysicsDataHandler(object):
 
         import pandas as pd
         import tarfile
+        from io import BytesIO
         
         if basepath is None:
             basepath = self.__basepath
@@ -235,7 +236,7 @@ class SociophysicsDataHandler(object):
 
                 elif final_path.endswith(".tar.gz"):
                     #reddit case, with subcomments
-                    from io import BytesIO
+                    
                     buffer = BytesIO()
 
 
@@ -247,7 +248,10 @@ class SociophysicsDataHandler(object):
 
                 elif final_path.endswith(".csv"):
                     # stock case
-                    self.df = pd.read_csv(data, index_col=0, parse_dates=[0])
+                    buffer = BytesIO()
+                    buffer.write(data)
+                    buffer.seek(0)
+                    self.df = pd.read_csv(buffer, index_col=0, parse_dates=[0])
                     print("data fetched. Accessible as <this-object>.df")
 
                 else:
