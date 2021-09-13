@@ -17,6 +17,37 @@ BASE_PATH = None
 BASE_PATH_STUDENT = "/ProRail_USE_LL_data"
 
 
+class RedditComments(object):
+    def __init__(self,tgz_archive):
+        self.tgz_archive = tgz_archive
+        self.df = None
+
+    def print_file_list(self):
+        print(self.tgz_archive.list())
+
+    def get_file_names(self):
+        return self.tgz_archive.getnames()
+
+    def get_comment_matching_id(self,idstr):
+        import pandas as pd
+        from io import BytesIO
+        flist = self.get_file_names()
+
+        matching_fnames = filter(lambda x : idstr in x
+                                 , flist)
+
+        out = []
+        for final_fname in matching_fnames:
+            print(final_fname)
+            data = self.tgz_archive.extractfile(final_fname)
+            print(data)
+            with open(BytesIO(data)) as f:
+                print(f.read())
+            out.append(pd.read_json(data, orient="index"))
+        self.df = out
+            
+
+
 class SociophysicsDataHandler(object):
     """Pedestrian dynamics data retriever for the
     Sociophysics courses at Eindhoven University of Technology.
@@ -177,6 +208,64 @@ class SociophysicsDataHandler(object):
 
         print("depth data fetched. Accessible as <this-object>"
               ".dd and associated timestamps accesible as <this-object>.t")
+
+    def fetch_econophysics_data_from_path(self,path, basepath=BASE_PATH):
+
+        import pandas as pd
+        import tarfile
+        
+        if basepath is None:
+            basepath = self.__basepath
+
+        final_path = os.path.join(basepath, path)
+        print('trying to fetch:', final_path)
+
+        dump_data_in_memory_only = True
+
+        formats_to_decompress = ["tar.gz"]
+        formats_to_open_onthefly = ["json","csv"]
+
+        if dump_data_in_memory_only:
+            data = self.__oc_client.get_file_contents(final_path)
+            if True:
+                if final_path.endswith(".json"):
+                    # reddit case, no sub 
+                    self.df = pd.read_json(data, orient="index")
+                    print("data fetched. Accessible as <this-object>.df")
+
+                elif final_path.endswith(".tar.gz"):
+                    #reddit case, with subcomments
+                    from io import BytesIO
+                    buffer = BytesIO()
+
+
+                    buffer.write(data)
+                    buffer.seek(0)
+                    
+                    self.reddit_comments = RedditComments(tarfile.open(fileobj=buffer,mode = "r:gz"))
+                    print("data fetched. Accessible as <this-object>.reddit_comments")
+
+                elif final_path.endswith(".csv"):
+                    # stock case
+                    self.df = pd.read_csv(data, index_col=0, parse_dates=[0])
+                    print("data fetched. Accessible as <this-object>.df")
+
+                else:
+                    print("file extension is not recognized!")
+                    raise NotImplementedError
+            # except:
+            #     return data
+            
+            # self.t, self.dd = self.__decode_targz_in_memory(targz)
+        else:
+            raise NotImplementedError
+        
+            # # not the preferred way. disabled by default.
+            # temp_file = 'temp.tar.gz'
+            # self.__oc_client.get_file(final_path, temp_file)
+            # self.t, self.dd = self.__decode_targz(temp_file)
+
+        
 
     def fetch_background_image_from_path(self, path, basepath=BASE_PATH):
         """
