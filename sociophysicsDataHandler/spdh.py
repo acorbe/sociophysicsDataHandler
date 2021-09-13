@@ -11,9 +11,10 @@ import PIL.Image as Image
 import io
 import os
 
-TARGET_WEBDAV = "https://tue.data.surfsara.nl"
+TARGET_WEBDAV = "https://tue.data.surfsara.nl/" # "https://tue.data.surfsara.nl/remote.php/nonshib-webdav" # 
 DEFAULT_FNAME = "auth.txt"
-BASE_PATH = "/ProRail_USE_LL_data"
+BASE_PATH = None
+BASE_PATH_STUDENT = "/ProRail_USE_LL_data"
 
 
 class SociophysicsDataHandler(object):
@@ -21,13 +22,18 @@ class SociophysicsDataHandler(object):
     Sociophysics courses at Eindhoven University of Technology.
     """
 
-    def __init__(self, target_webdav=TARGET_WEBDAV, auth_fname=DEFAULT_FNAME):
+    def __init__(self
+                 , target_webdav=TARGET_WEBDAV
+                 , auth_fname=DEFAULT_FNAME
+                 , basepath = BASE_PATH_STUDENT):
         """Constructor method
         """
         self.__target_webdav = target_webdav
         self.load_credentials(auth_fname)
         if self.__have_credentials:
             self.__login()
+
+        self.__basepath = basepath
 
     def load_credentials(self, auth_fname=DEFAULT_FNAME):
         """Load credentials from auth.txt file. A typical file looks
@@ -117,6 +123,9 @@ class SociophysicsDataHandler(object):
                          Only for advanced usage.
         """
 
+        if basepath is None:
+            basepath = self.__basepath
+
         if not path.startswith('/'):
             path = '/' + path
 
@@ -149,6 +158,9 @@ class SociophysicsDataHandler(object):
         :param basepath: enables changing the basepath. Only for advanced usage.
         """
 
+        if basepath is None:
+            basepath = self.__basepath
+
         final_path = os.path.join(basepath, path)
         print('trying to fetch:', final_path)
 
@@ -175,6 +187,9 @@ class SociophysicsDataHandler(object):
         :param basepath: enables changing the basepath.
                          Only for advanced usage.
         """
+        if basepath is None:
+            basepath = self.__basepath
+        
         if not path.startswith('/'):
             path = '/' + path
 
@@ -196,9 +211,13 @@ class SociophysicsDataHandler(object):
         :param basepath: enables changing the basepath.
                          Only for advanced usage.
         """
+        if basepath is None:
+            basepath = self.__basepath
+        
         from pandas import DataFrame
 
         final_path = os.path.join("", basepath, path, "")
+        print("targeting path", final_path)
 
         oc_files = self.__oc_client.list(final_path)
 
@@ -217,6 +236,8 @@ class SociophysicsDataHandler(object):
         :param basepath: enables changing the basepath.
                          Only for advanced usage.
         """
+        if basepath is None:
+            basepath = self.__basepath
 
         final_path = os.path.join("", basepath, path, "")
 
