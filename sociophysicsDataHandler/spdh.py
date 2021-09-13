@@ -40,10 +40,10 @@ class RedditComments(object):
         for final_fname in matching_fnames:
             print(final_fname)
             data = self.tgz_archive.extractfile(final_fname)
-            print(data)
-            with open(BytesIO(data)) as f:
-                print(f.read())
-            out.append(pd.read_json(data, orient="index"))
+
+            out.append(pd.read_json(data))
+
+        print("data fetched. Accessible as <this-object>.reddit_comments.df")
         self.df = out
             
 
