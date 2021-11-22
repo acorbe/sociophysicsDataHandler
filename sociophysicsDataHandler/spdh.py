@@ -10,11 +10,12 @@ import pyarrow
 import PIL.Image as Image
 import io
 import os
+import urllib3
 
-TARGET_WEBDAV = "https://tue.data.surfsara.nl/" # "https://tue.data.surfsara.nl/remote.php/nonshib-webdav" # 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+TARGET_WEBDAV = "https://fnfcloud.phys.tue.nl/owncloud"
 DEFAULT_FNAME = "auth.txt"
-BASE_PATH = None
-BASE_PATH_STUDENT = "/ProRail_USE_LL_data"
+BASE_PATH = "/storage12/surfsara/ProRail_USE_LL_data"
 
 
 class RedditComments(object):
@@ -56,7 +57,7 @@ class SociophysicsDataHandler(object):
     def __init__(self
                  , target_webdav=TARGET_WEBDAV
                  , auth_fname=DEFAULT_FNAME
-                 , basepath = BASE_PATH_STUDENT):
+                 , basepath = BASE_PATH):
         """Constructor method
         """
         self.__target_webdav = target_webdav
@@ -101,7 +102,7 @@ class SociophysicsDataHandler(object):
             # raise Exception("File not found")
 
     def __login(self):
-        self.__oc_client = owncloud.Client(self.__target_webdav)
+        self.__oc_client = owncloud.Client(self.__target_webdav, verify_certs = False)
         oc = self.__oc_client
 
         usr = self.__credentials_usr
