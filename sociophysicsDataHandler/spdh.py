@@ -13,9 +13,12 @@ import os
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-TARGET_WEBDAV = "https://fnfcloud.phys.tue.nl/owncloud"
+TARGET_WEBDAV = "https://crowdflow3.phys.tue.nl/owncloud"
 DEFAULT_FNAME = "auth.txt"
-BASE_PATH = "/storage12/surfsara/ProRail_USE_LL_data"
+BASE_PATH = "/storage/surfsara/ProRail_USE_LL_data"
+# TARGET_WEBDAV = "https://fnfcloud.phys.tue.nl/owncloud"
+# DEFAULT_FNAME = "auth.txt"
+# BASE_PATH = "/storage12/surfsara/ProRail_USE_LL_data"
 
 
 class RedditComments(object):
@@ -102,7 +105,7 @@ class SociophysicsDataHandler(object):
             # raise Exception("File not found")
 
     def __login(self):
-        self.__oc_client = owncloud.Client(self.__target_webdav, verify_certs = False)
+        self.__oc_client = owncloud.Client(self.__target_webdav, verify_certs = True)
         oc = self.__oc_client
 
         usr = self.__credentials_usr
