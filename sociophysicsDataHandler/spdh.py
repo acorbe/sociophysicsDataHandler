@@ -149,13 +149,14 @@ class SociophysicsDataHandler(object):
         df.columns = ['date_time_utc', 'tracked_object', 'x_pos', 'y_pos']
         return df
 
-    def fetch_prorail_data_from_path(self, path, basepath=BASE_PATH):
+    def fetch_prorail_data_from_path(self, path, basepath=BASE_PATH, verbose = True):
         """
         Fetch trajectory data from tue research drive.
 
         :param path: path + filename if the file that will be fetched
         :param basepath: enables changing the basepath.
                          Only for advanced usage.
+        :param verbose: enables verbose logging
         """
 
         if basepath is None:
@@ -165,7 +166,8 @@ class SociophysicsDataHandler(object):
             path = '/' + path
 
         final_path = basepath + path
-        print('trying to fetch:', final_path)
+        if verbose:
+            print('trying to fetch:', final_path)
 
         dump_data_in_memory_only = True
 
@@ -182,8 +184,9 @@ class SociophysicsDataHandler(object):
             self.df = self.__rename_columns(self.df)
 
         self.df = self.__cast_dtypes(self.df)
-
-        print("data fetched. Accessible as <this-object>.df")
+        
+        if verbose:
+            print("data fetched. Accessible as <this-object>.df")
 
     def fetch_depth_data_from_path(self, path, basepath=BASE_PATH):
         """
