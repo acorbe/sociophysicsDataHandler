@@ -316,7 +316,8 @@ class SociophysicsDataHandler(object):
         
         from pandas import DataFrame
 
-        final_path = os.path.join("", basepath, path, "")
+#         final_path = os.path.join("", basepath, path, "")
+        final_path = f"{basepath}/{path}"
         print("targeting path", final_path)
 
         oc_files = self.__oc_client.list(final_path)
