@@ -13,7 +13,7 @@ import os
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-TARGET_WEBDAV = "https://crowdflow3.phys.tue.nl/owncloud"
+TARGET_WEBDAV = "https://pssdata.phys.tue.nl/owncloud" #"https://crowdflow3.phys.tue.nl/owncloud"
 DEFAULT_FNAME = "auth.txt"
 BASE_PATH = "/storage/surfsara/ProRail_USE_LL_data"
 # TARGET_WEBDAV = "https://fnfcloud.phys.tue.nl/owncloud"
