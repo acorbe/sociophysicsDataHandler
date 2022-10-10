@@ -3,14 +3,15 @@ courses at Eindhoven University of Technology.
 
 Author: Alessandro Corbetta
 """
-
 import owncloud
 import pyarrow.parquet as pq
+import pandas as pd
 import pyarrow
 import PIL.Image as Image
 import io
 import os
 import urllib3
+#from sociophysicsDataHandler import transformers
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 TARGET_WEBDAV = "https://pssdata.phys.tue.nl/owncloud" #"https://crowdflow3.phys.tue.nl/owncloud"
@@ -22,7 +23,7 @@ BASE_PATH = "/storage/surfsara/ProRail_USE_LL_data"
 
 
 class RedditComments(object):
-    def __init__(self,tgz_archive):
+    def __init__(self, tgz_archive):
         self.tgz_archive = tgz_archive
         self.df = None
 
@@ -32,13 +33,12 @@ class RedditComments(object):
     def get_file_names(self):
         return self.tgz_archive.getnames()
 
-    def get_comment_matching_id(self,idstr):
+    def get_comment_matching_id(self, idstr):
         import pandas as pd
         from io import BytesIO
         flist = self.get_file_names()
 
-        matching_fnames = filter(lambda x : idstr in x
-                                 , flist)
+        matching_fnames = filter(lambda x: idstr in x, flist)
 
         out = []
         for final_fname in matching_fnames:
@@ -49,7 +49,6 @@ class RedditComments(object):
 
         print("data fetched. Accessible as <this-object>.reddit_comments.df")
         self.df = out
-            
 
 
 class SociophysicsDataHandler(object):
@@ -184,10 +183,49 @@ class SociophysicsDataHandler(object):
             self.df = self.__rename_columns(self.df)
 
         self.df = self.__cast_dtypes(self.df)
+        self.df['datetime'] = pd.to_datetime(self.df.date_time_utc, unit='ms') 
+        self.df['datetime'] = self.df.datetime.dt.tz_localize('UTC')
+        self.df['datetime'] = self.df.datetime.dt.tz_convert('Europe/Berlin')
         
         if verbose:
             print("data fetched. Accessible as <this-object>.df")
 
+    def fetch_prorail_train_information(self, station = 'ehv', basepath=BASE_PATH, verbose = True):
+        """
+        Fetch train information
+        
+        :param station: train station for which the train information data is fetched
+        :param basepath: enables changing the basepath. Only for advanced usage.
+        """
+
+        if basepath is None:
+            basepath = self.__basepath
+
+        path = f'/{station}/{station}_train_information_pss.parquet'
+
+        final_path = basepath + path
+        if verbose:
+            print('trying to fetch:', final_path)
+
+        dump_data_in_memory_only = True
+
+        if dump_data_in_memory_only:
+            train_information = self.__oc_client.get_file_contents(final_path)
+            self.train_information = self.__decode_parquet_in_memory(train_information)
+        else:
+            # not the preferred way. disabled by default.
+            temp_file = 'temp.parquet'
+            self.__oc_client.get_file(final_path, temp_file)
+            self.train_information = self.__decode_parquet(temp_file)
+        
+        if verbose:
+            print("data fetched. Accessible as <this-object>.train_information")
+
+        for column in ['arrival_time', 'departure_time']:
+            self.train_information[f'{column}'] = \
+                self.train_information[column].dt.tz_localize('Europe/Berlin')
+            
+        
     def fetch_depth_data_from_path(self, path, basepath=BASE_PATH):
         """
         Fetch image depth data from tue research drive.
