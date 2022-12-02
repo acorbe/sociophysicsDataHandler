@@ -219,12 +219,7 @@ class SociophysicsDataHandler(object):
             self.train_information = self.__decode_parquet(temp_file)
         
         if verbose:
-            print("data fetched. Accessible as <this-object>.train_information")
-
-        for column in ['arrival_time', 'departure_time']:
-            self.train_information[f'{column}'] = \
-                self.train_information[column].dt.tz_localize('Europe/Berlin')
-            
+            print("data fetched. Accessible as <this-object>.train_information")            
         
     def fetch_depth_data_from_path(self, path, basepath=BASE_PATH):
         """
