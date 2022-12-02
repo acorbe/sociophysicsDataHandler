@@ -1,7 +1,7 @@
 Push changes
 
-Push new tag with
-git tag -a <tag name> -n <commit message>
+Push new tag with:
+git tag -a <tag name> -m <commit message>
 git push
 
 Update version and url in setup.py
