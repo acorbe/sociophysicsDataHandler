@@ -179,7 +179,7 @@ class SociophysicsDataHandler(object):
             self.__oc_client.get_file(final_path, temp_file)
             self.df = self.__decode_parquet(temp_file)
 
-        if self.df.shape[1] > 4:
+        if 'h_pos' in self.df:
             self.df = self.__rename_columns(self.df)
 
         self.df = self.__cast_dtypes(self.df)
