@@ -10,6 +10,7 @@ import pyarrow
 import PIL.Image as Image
 import io
 import os
+import json
 import urllib3
 #from sociophysicsDataHandler import transformers
 
@@ -430,3 +431,13 @@ class SociophysicsDataHandler(object):
                 print(f'  File: {file.name}')
                 if file == entries[-1]:
                     print('\n')
+
+def get_config_validity(config):
+    valid_from = pd.to_datetime(config['valid_from'], utc = True)
+    valid_to = pd.to_datetime(config['valid_to'], utc = True)
+    if pd.isnull(valid_to):
+        valid_to = pd.to_datetime('now', utc = True)
+    return valid_from, valid_to
+
+def is_config_valid(date, valid_from, valid_to):
+    return (date >= valid_from) and (date <= valid_to)
