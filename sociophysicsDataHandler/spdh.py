@@ -190,6 +190,50 @@ class SociophysicsDataHandler(object):
         if verbose:
             print("data fetched. Accessible as <this-object>.df")
 
+    def fetch_configuration_data(
+            self,
+            station,
+            platform_number,
+            date,
+            basepath = BASE_PATH,
+            verbose = True
+    ):
+
+        if basepath is None:
+            basepath = self.__basepath
+            
+        date = pd.to_datetime(date, utc = True)
+
+        if station == 'ehv':
+            platform = 'platform' + platform_number
+        else:
+            platform = 'Perron'+ platform_number
+        
+        path = os.path.join(
+            basepath,
+            station,
+            platform,
+            'configuration'
+            # 'ehv_Perron2.1_siemens.json'
+        )
+        print('trying to fetch:', path)
+        oc_files = self.__oc_client.list(path)
+        file_paths = [x.path for x in oc_files]
+
+        for path in file_paths:
+
+            data = self.__oc_client.get_file_contents(path)
+            config = json.loads(data.decode('utf-8'))                
+            valid_from, valid_to = get_config_validity(config)
+            config_valid = is_config_valid(date, valid_from, valid_to)
+            
+            if config_valid:
+                return config
+
+        if verbose:
+            print('WARNING: No valid configuration found for date:', date.date())
+
+            
     def fetch_prorail_train_information(self, station = 'ehv', basepath=BASE_PATH, verbose = True):
         """
         Fetch train information
