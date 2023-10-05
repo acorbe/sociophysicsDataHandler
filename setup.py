@@ -7,10 +7,10 @@ with open("Readme.md", "r") as fh:
 
 setup(name='sociophysicsDataHandler',
       description="Data retriever package for the Sociophysics course at TU/Eindhoven.",
-      version='1.4',
+      version='1.4.1',
       author='Alessandro Corbetta; Cas Pouw; Joris Willems',
       author_email='a.corbetta@tue.nl',
-      url='https://github.com/acorbe/sociophysicsDataHandler/archive/refs/tags/v1.4.tar.gz',
+      url='https://github.com/acorbe/sociophysicsDataHandler/archive/refs/tags/v1.4.1.tar.gz',
       long_description = long_description,
       long_description_content_type="text/markdown",
       packages=['sociophysicsDataHandler'],
