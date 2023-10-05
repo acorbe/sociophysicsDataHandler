@@ -210,13 +210,14 @@ class SociophysicsDataHandler(object):
         else:
             platform = 'Perron'+ platform_number
         
-        path = os.path.join(
-            basepath,
-            station,
-            platform,
-            'configuration'
-            # 'ehv_Perron2.1_siemens.json'
-        )
+        # path = os.path.join(
+        #     basepath,
+        #     station,
+        #     platform,
+        #     'configuration'
+        #     # 'ehv_Perron2.1_siemens.json'
+        # )
+        path = f'{basepath}/{station}/{platform}/configuration/'
         print('trying to fetch:', path)
         oc_files = self.__oc_client.list(path)
         file_paths = [x.path for x in oc_files]
