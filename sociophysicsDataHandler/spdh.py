@@ -10,12 +10,17 @@ import pyarrow
 import PIL.Image as Image
 import io
 import os
+import gzip
 import json
 import urllib3
-#from sociophysicsDataHandler import transformers
+from io import BytesIO
+
+# from sociophysicsDataHandler import transformers
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-TARGET_WEBDAV = "https://pssdata.phys.tue.nl/owncloud" #"https://crowdflow3.phys.tue.nl/owncloud"
+TARGET_WEBDAV = (
+    "https://pssdata.phys.tue.nl/owncloud"  # "https://crowdflow3.phys.tue.nl/owncloud"
+)
 DEFAULT_FNAME = "auth.txt"
 BASE_PATH = "/storage/surfsara/ProRail_USE_LL_data"
 # TARGET_WEBDAV = "https://fnfcloud.phys.tue.nl/owncloud"
@@ -37,6 +42,7 @@ class RedditComments(object):
     def get_comment_matching_id(self, idstr):
         import pandas as pd
         from io import BytesIO
+
         flist = self.get_file_names()
 
         matching_fnames = filter(lambda x: idstr in x, flist)
@@ -57,12 +63,10 @@ class SociophysicsDataHandler(object):
     Sociophysics courses at Eindhoven University of Technology.
     """
 
-    def __init__(self
-                 , target_webdav=TARGET_WEBDAV
-                 , auth_fname=DEFAULT_FNAME
-                 , basepath = BASE_PATH):
-        """Constructor method
-        """
+    def __init__(
+        self, target_webdav=TARGET_WEBDAV, auth_fname=DEFAULT_FNAME, basepath=BASE_PATH
+    ):
+        """Constructor method"""
         self.__target_webdav = target_webdav
         self.load_credentials(auth_fname)
         if self.__have_credentials:
@@ -81,9 +85,8 @@ class SociophysicsDataHandler(object):
         """
 
         try:
-            with open(auth_fname, 'r') as f:
-                content = [x.replace('\n', '').replace(' ', '')
-                           for x in f.readlines()]
+            with open(auth_fname, "r") as f:
+                content = [x.replace("\n", "").replace(" ", "") for x in f.readlines()]
 
             self.__credentials_usr = content[0]
             self.__credentials_token = content[1]
@@ -97,15 +100,15 @@ class SociophysicsDataHandler(object):
             print("<access email>")
             print("<access token>")
 
-            with open(auth_fname, 'w') as f:
-                f.write('')
+            with open(auth_fname, "w") as f:
+                f.write("")
 
             # TODO: rewrite as a proper FnF exception
             self.__have_credentials = False
             # raise Exception("File not found")
 
     def __login(self):
-        self.__oc_client = owncloud.Client(self.__target_webdav, verify_certs = True)
+        self.__oc_client = owncloud.Client(self.__target_webdav, verify_certs=True)
         oc = self.__oc_client
 
         usr = self.__credentials_usr
@@ -123,6 +126,7 @@ class SociophysicsDataHandler(object):
 
     def __decode_targz(self, fpath):
         from .ddut import get_depth_maps
+
         return get_depth_maps([fpath], verbose=True)
 
     def __decode_parquet_in_memory(self, fpath):
@@ -135,21 +139,20 @@ class SociophysicsDataHandler(object):
 
     def __cast_dtypes(self, df):
         dtypes = {
-            'date_time_utc': 'float64',
-            'tracked_object': 'int32',
-            'x_pos': 'float32',
-            'y_pos': 'float32'
+            "date_time_utc": "float64",
+            "tracked_object": "int32",
+            "x_pos": "float32",
+            "y_pos": "float32",
         }
-        df = df.assign(**{c: df[c].astype(d)
-                          for c, d in dtypes.items()})
-        return df
-    
-    def __rename_columns(self, df):
-        del df['h_pos']
-        df.columns = ['date_time_utc', 'tracked_object', 'x_pos', 'y_pos']
+        df = df.assign(**{c: df[c].astype(d) for c, d in dtypes.items()})
         return df
 
-    def fetch_prorail_data_from_path(self, path, basepath=BASE_PATH, verbose = True):
+    def __rename_columns(self, df):
+        del df["h_pos"]
+        df.columns = ["date_time_utc", "tracked_object", "x_pos", "y_pos"]
+        return df
+
+    def fetch_prorail_data_from_path(self, path, basepath=BASE_PATH, verbose=True):
         """
         Fetch trajectory data from tue research drive.
 
@@ -162,12 +165,12 @@ class SociophysicsDataHandler(object):
         if basepath is None:
             basepath = self.__basepath
 
-        if not path.startswith('/'):
-            path = '/' + path
+        if not path.startswith("/"):
+            path = "/" + path
 
         final_path = basepath + path
         if verbose:
-            print('trying to fetch:', final_path)
+            print("trying to fetch:", final_path)
 
         dump_data_in_memory_only = True
 
@@ -176,40 +179,34 @@ class SociophysicsDataHandler(object):
             self.df = self.__decode_parquet_in_memory(df)
         else:
             # not the preferred way. disabled by default.
-            temp_file = 'temp.parquet'
+            temp_file = "temp.parquet"
             self.__oc_client.get_file(final_path, temp_file)
             self.df = self.__decode_parquet(temp_file)
 
-        if 'h_pos' in self.df:
+        if "h_pos" in self.df:
             self.df = self.__rename_columns(self.df)
 
         self.df = self.__cast_dtypes(self.df)
-        self.df['datetime'] = pd.to_datetime(self.df.date_time_utc, unit='ms') 
-        self.df['datetime'] = self.df.datetime.dt.tz_localize('UTC')
-        self.df['datetime'] = self.df.datetime.dt.tz_convert('Europe/Berlin')
-        
+        self.df["datetime"] = pd.to_datetime(self.df.date_time_utc, unit="ms")
+        self.df["datetime"] = self.df.datetime.dt.tz_localize("UTC")
+        self.df["datetime"] = self.df.datetime.dt.tz_convert("Europe/Berlin")
+
         if verbose:
             print("data fetched. Accessible as <this-object>.df")
 
     def fetch_configuration_data(
-            self,
-            station,
-            platform_number,
-            date,
-            basepath = BASE_PATH,
-            verbose = True
+        self, station, platform_number, date, basepath=BASE_PATH, verbose=True
     ):
-
         if basepath is None:
             basepath = self.__basepath
-            
-        date = pd.to_datetime(date, utc = True)
 
-        if station == 'ehv':
-            platform = 'platform' + platform_number
+        date = pd.to_datetime(date, utc=True)
+
+        if station == "ehv":
+            platform = "platform" + platform_number
         else:
-            platform = 'Perron'+ platform_number
-        
+            platform = "Perron" + platform_number
+
         # path = os.path.join(
         #     basepath,
         #     station,
@@ -217,29 +214,29 @@ class SociophysicsDataHandler(object):
         #     'configuration'
         #     # 'ehv_Perron2.1_siemens.json'
         # )
-        path = f'{basepath}/{station}/{platform}/configuration/'
-        print('trying to fetch:', path)
+        path = f"{basepath}/{station}/{platform}/configuration/"
+        print("trying to fetch:", path)
         oc_files = self.__oc_client.list(path)
         file_paths = [x.path for x in oc_files]
 
         for path in file_paths:
-
             data = self.__oc_client.get_file_contents(path)
-            config = json.loads(data.decode('utf-8'))                
+            config = json.loads(data.decode("utf-8"))
             valid_from, valid_to = get_config_validity(config)
             config_valid = is_config_valid(date, valid_from, valid_to)
-            
+
             if config_valid:
                 return config
 
         if verbose:
-            print('WARNING: No valid configuration found for date:', date.date())
+            print("WARNING: No valid configuration found for date:", date.date())
 
-            
-    def fetch_prorail_train_information(self, station = 'ehv', basepath=BASE_PATH, verbose = True):
+    def fetch_prorail_train_information(
+        self, station="ehv", basepath=BASE_PATH, verbose=True
+    ):
         """
         Fetch train information
-        
+
         :param station: train station for which the train information data is fetched
         :param basepath: enables changing the basepath. Only for advanced usage.
         """
@@ -247,11 +244,11 @@ class SociophysicsDataHandler(object):
         if basepath is None:
             basepath = self.__basepath
 
-        path = f'/{station}/{station}_train_information_pss.parquet'
+        path = f"/{station}/{station}_train_information_pss.parquet"
 
         final_path = basepath + path
         if verbose:
-            print('trying to fetch:', final_path)
+            print("trying to fetch:", final_path)
 
         dump_data_in_memory_only = True
 
@@ -260,13 +257,50 @@ class SociophysicsDataHandler(object):
             self.train_information = self.__decode_parquet_in_memory(train_information)
         else:
             # not the preferred way. disabled by default.
-            temp_file = 'temp.parquet'
+            temp_file = "temp.parquet"
             self.__oc_client.get_file(final_path, temp_file)
             self.train_information = self.__decode_parquet(temp_file)
-        
+
         if verbose:
-            print("data fetched. Accessible as <this-object>.train_information")            
-        
+            print("data fetched. Accessible as <this-object>.train_information")
+
+    def fetch_ehv_staircase_trajectories_from_path(
+        self, path: str, basepath: str = BASE_PATH, verbose: bool = True
+    ):
+        """
+        Fetches EHV staircase trajectories from a specified path.
+        Trajectories recorded by TU/e developed ZED cameras.
+
+        Parameters:
+        path (str): The path to the file or directory to fetch.
+        basepath (str, optional): The base path to prepend to the path. Defaults to BASE_PATH.
+        verbose (bool, optional): If True, prints out the actions being performed. Defaults to True.
+
+        Returns:
+        None. The fetched data is stored in the instance variable 'df'.
+        """
+
+        if basepath is None:
+            basepath = self.__basepath
+
+        path = path if path.startswith("/") else f"/{path}"
+        final_path = f"{basepath}{path}"
+
+        print("trying to fetch:", final_path) if verbose else None
+
+        data = self.__oc_client.get_file_contents(final_path)
+        buffer = BytesIO(data)
+
+        # Extract the trajectories from the tar.gz file if necessary
+        if final_path.endswith(".tar.gz"):
+            buffer = gzip.open(buffer)
+
+        df = pd.read_csv(buffer, parse_dates=[0])
+        df.columns.values[0] = "time"
+        self.df = df
+
+        print("data fetched. Accessible as <this-object>.df") if verbose else None
+
     def fetch_depth_data_from_path(self, path, basepath=BASE_PATH):
         """
         Fetch image depth data from tue research drive.
@@ -279,7 +313,7 @@ class SociophysicsDataHandler(object):
             basepath = self.__basepath
 
         final_path = os.path.join(basepath, path)
-        print('trying to fetch:', final_path)
+        print("trying to fetch:", final_path)
 
         dump_data_in_memory_only = True
 
@@ -288,48 +322,50 @@ class SociophysicsDataHandler(object):
             self.t, self.dd = self.__decode_targz_in_memory(targz)
         else:
             # not the preferred way. disabled by default.
-            temp_file = 'temp.tar.gz'
+            temp_file = "temp.tar.gz"
             self.__oc_client.get_file(final_path, temp_file)
             self.t, self.dd = self.__decode_targz(temp_file)
 
-        print("depth data fetched. Accessible as <this-object>"
-              ".dd and associated timestamps accesible as <this-object>.t")
+        print(
+            "depth data fetched. Accessible as <this-object>"
+            ".dd and associated timestamps accesible as <this-object>.t"
+        )
 
-    def fetch_econophysics_data_from_path(self,path, basepath=BASE_PATH):
-
+    def fetch_econophysics_data_from_path(self, path, basepath=BASE_PATH):
         import pandas as pd
         import tarfile
-        from io import BytesIO
-        
+
         if basepath is None:
             basepath = self.__basepath
 
         final_path = os.path.join(basepath, path)
-        print('trying to fetch:', final_path)
+        print("trying to fetch:", final_path)
 
         dump_data_in_memory_only = True
 
         formats_to_decompress = ["tar.gz"]
-        formats_to_open_onthefly = ["json","csv"]
+        formats_to_open_onthefly = ["json", "csv"]
 
         if dump_data_in_memory_only:
             data = self.__oc_client.get_file_contents(final_path)
             if True:
                 if final_path.endswith(".json"):
-                    # reddit case, no sub 
+                    # reddit case, no sub
+                    print(f"data: {data}")
                     self.df = pd.read_json(data, orient="index")
                     print("data fetched. Accessible as <this-object>.df")
 
                 elif final_path.endswith(".tar.gz"):
-                    #reddit case, with subcomments
-                    
-                    buffer = BytesIO()
+                    # reddit case, with subcomments
 
+                    buffer = BytesIO()
 
                     buffer.write(data)
                     buffer.seek(0)
-                    
-                    self.reddit_comments = RedditComments(tarfile.open(fileobj=buffer,mode = "r:gz"))
+
+                    self.reddit_comments = RedditComments(
+                        tarfile.open(fileobj=buffer, mode="r:gz")
+                    )
                     print("data fetched. Accessible as <this-object>.reddit_comments")
 
                 elif final_path.endswith(".csv"):
@@ -345,17 +381,15 @@ class SociophysicsDataHandler(object):
                     raise NotImplementedError
             # except:
             #     return data
-            
+
             # self.t, self.dd = self.__decode_targz_in_memory(targz)
         else:
             raise NotImplementedError
-        
+
             # # not the preferred way. disabled by default.
             # temp_file = 'temp.tar.gz'
             # self.__oc_client.get_file(final_path, temp_file)
             # self.t, self.dd = self.__decode_targz(temp_file)
-
-        
 
     def fetch_background_image_from_path(self, path, basepath=BASE_PATH):
         """
@@ -368,12 +402,12 @@ class SociophysicsDataHandler(object):
         """
         if basepath is None:
             basepath = self.__basepath
-        
-        if not path.startswith('/'):
-            path = '/' + path
+
+        if not path.startswith("/"):
+            path = "/" + path
 
         final_path = basepath + path
-        print('trying to fetch:', final_path)
+        print("trying to fetch:", final_path)
 
         bg = self.__oc_client.get_file_contents(final_path)
         self.bg = Image.open(io.BytesIO(bg))
@@ -392,17 +426,18 @@ class SociophysicsDataHandler(object):
         """
         if basepath is None:
             basepath = self.__basepath
-        
+
         from pandas import DataFrame
 
-#         final_path = os.path.join("", basepath, path, "")
+        #         final_path = os.path.join("", basepath, path, "")
         final_path = f"{basepath}/{path}"
         print("targeting path", final_path)
 
         oc_files = self.__oc_client.list(final_path)
 
-        self.filelist = DataFrame(
-            [x.__dict__ for x in oc_files]).drop('file_type', axis=1)
+        self.filelist = DataFrame([x.__dict__ for x in oc_files]).drop(
+            "file_type", axis=1
+        )
 
         print("Files listed. Accessible as <this-object>.filelist")
 
@@ -425,20 +460,22 @@ class SociophysicsDataHandler(object):
 
         print(f"Folder {path} contains the following files and/or folders:")
         for file in entries:
-            if file.file_type == 'dir':
-                print(f'Folder: {file.name}\n')
+            if file.file_type == "dir":
+                print(f"Folder: {file.name}\n")
                 self.print_files(os.path.join(path, file.name))
             else:
-                print(f'  File: {file.name}')
+                print(f"  File: {file.name}")
                 if file == entries[-1]:
-                    print('\n')
+                    print("\n")
+
 
 def get_config_validity(config):
-    valid_from = pd.to_datetime(config['valid_from'], utc = True)
-    valid_to = pd.to_datetime(config['valid_to'], utc = True)
+    valid_from = pd.to_datetime(config["valid_from"], utc=True)
+    valid_to = pd.to_datetime(config["valid_to"], utc=True)
     if pd.isnull(valid_to):
-        valid_to = pd.to_datetime('now', utc = True)
+        valid_to = pd.to_datetime("now", utc=True)
     return valid_from, valid_to
+
 
 def is_config_valid(date, valid_from, valid_to):
     return (date >= valid_from) and (date <= valid_to)
