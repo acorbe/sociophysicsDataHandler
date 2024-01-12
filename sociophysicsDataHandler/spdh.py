@@ -351,8 +351,7 @@ class SociophysicsDataHandler(object):
             if True:
                 if final_path.endswith(".json"):
                     # reddit case, no sub
-                    print(f"data: {data}")
-                    self.df = pd.read_json(data, orient="index")
+                    self.df = pd.read_json(data.decode("utf-8"), orient="index")
                     print("data fetched. Accessible as <this-object>.df")
 
                 elif final_path.endswith(".tar.gz"):
